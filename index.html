@@ -9,8 +9,9 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
         }
 
         .container {
@@ -26,21 +27,57 @@
             transition: background 0.5s;
         }
 
+        /* Stylizacja sekcji kontrolnej */
         .controls {
-            width: 100%;
+            position: absolute; /* Umożliwia pozycjonowanie i przeciąganie */
+            top: 100px;
+            left: 20px;
+            width: 300px;
+            max-height: 70vh;
+            overflow-y: auto;
             padding: 20px;
             background-color: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            cursor: default; /* Zmiana kursora na domyślny */
+            z-index: 1000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .controls.hidden {
+            transform: translateX(-110%);
+            opacity: 0;
+        }
+
+        .controls-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            cursor: grab; /* Kursor wskazujący możliwość przeciągania */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls-header span {
+            cursor: grab;
+        }
+
+        .controls-header button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
         }
 
         .controls-container {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .control-group {
             margin-bottom: 20px;
+            width: 100%;
         }
 
         label {
@@ -49,17 +86,18 @@
         }
 
         input[type="color"], input[type="range"], input[type="number"] {
-            width: 100px;
+            width: 100%;
             margin-bottom: 10px;
+            box-sizing: border-box;
         }
 
         input[type="range"] {
             height: 20px;
         }
 
-        .output-container {
+        .output-container, .import-container {
             margin-top: 20px;
-            width: 80%;
+            width: 100%;
         }
 
         textarea {
@@ -70,6 +108,44 @@
             font-family: monospace;
             font-size: 14px;
             resize: none;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Przycisk ukrywania/pokazywania panelu kontrolnego */
+        #toggle-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: background-color 0.3s ease;
+            width: 150px;
+        }
+
+        #toggle-controls:hover {
+            background-color: #007bb5;
         }
     </style>
 </head>
@@ -79,8 +155,14 @@
     <div class="container" id="gradient-container">
     </div>
 
+    <!-- Toggle Button -->
+    <button id="toggle-controls">Ukryj Panel</button>
+
     <!-- Controls Container -->
-    <div class="controls">
+    <div class="controls" id="controls">
+        <div class="controls-header" id="controls-header">
+            <span>Gradient Controls</span>
+        </div>
         <div class="controls-container">
             <!-- Top Left -->
             <div class="control-group">
@@ -139,13 +221,22 @@
             </div>
         </div>
 
+        <!-- Output Container -->
         <div class="output-container">
             <label for="css-output">Generated CSS:</label>
             <textarea id="css-output" readonly></textarea>
         </div>
+
+        <!-- Import Container -->
+        <div class="import-container">
+            <label for="import-gradient">Import Gradient CSS:</label>
+            <textarea id="import-gradient" placeholder="Wklej tutaj kod CSS gradientu"></textarea>
+            <button id="import-button">Importuj Gradient</button>
+        </div>
     </div>
 
     <script>
+        // Pobranie elementów kontrolnych
         const color1 = document.getElementById('color1');
         const color2 = document.getElementById('color2');
         const color3 = document.getElementById('color3');
@@ -173,6 +264,45 @@
         const container = document.getElementById('gradient-container');
         const cssOutput = document.getElementById('css-output');
 
+        const importTextarea = document.getElementById('import-gradient');
+        const importButton = document.getElementById('import-button');
+
+        const toggleButton = document.getElementById('toggle-controls');
+        const controls = document.getElementById('controls');
+        const controlsHeader = document.getElementById('controls-header');
+        // const closeControlsButton = document.getElementById('close-controls'); // Usunięto, ponieważ nie ma przycisku zamknięcia w HTML
+
+        // Funkcja konwertująca kolor HEX na RGB
+        function hexToRgb(hex) {
+            // Obsługuje zarówno 3, jak i 6-znakowe HEX
+            let r, g, b;
+            if (hex.length === 4) {
+                r = parseInt(hex[1] + hex[1], 16);
+                g = parseInt(hex[2] + hex[2], 16);
+                b = parseInt(hex[3] + hex[3], 16);
+            } else if (hex.length === 7) {
+                r = parseInt(hex.slice(1, 3), 16);
+                g = parseInt(hex.slice(3, 5), 16);
+                b = parseInt(hex.slice(5, 7), 16);
+            } else {
+                // Domyślne wartości w przypadku nieprawidłowego formatu
+                r = 0;
+                g = 0;
+                b = 0;
+            }
+            return `${r}, ${g}, ${b}`;
+        }
+
+        // Funkcja konwertująca RGB na HEX
+        function rgbToHex(r, g, b) {
+            const toHex = (x) => {
+                const hex = parseInt(x).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            };
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        // Funkcja aktualizująca gradient na podstawie wartości kontrolnych
         function updateGradient() {
             const topLeft = color1.value;
             const topRight = color2.value;
@@ -205,25 +335,158 @@
                 radial-gradient(circle at ${positionBottomRightX}% ${positionBottomRightY}%, rgba(${hexToRgb(bottomRight)}, ${opacityBottomRight}), transparent ${sizeBottomRight}%)
             `;
 
-            container.style.background = gradientCss;
+            container.style.background = gradientCss.trim();
 
-            cssOutput.value = `background: ${gradientCss};`;
+            cssOutput.value = `background: ${gradientCss.trim()};`;
         }
 
-        function hexToRgb(hex) {
-            let r = parseInt(hex.slice(1, 3), 16);
-            let g = parseInt(hex.slice(3, 5), 16);
-            let b = parseInt(hex.slice(5, 7), 16);
-            return `${r}, ${g}, ${b}`;
-        }
-
-        // Event listeners for updates
-        [color1, color2, color3, color4, opacity1, opacity2, opacity3, opacity4, size1, size2, size3, size4, position1X, position1Y, position2X, position2Y, position3X, position3Y, position4X, position4Y].forEach(el => {
+        // Dodanie nasłuchiwaczy zdarzeń do wszystkich elementów kontrolnych
+        [
+            color1, color2, color3, color4,
+            opacity1, opacity2, opacity3, opacity4,
+            size1, size2, size3, size4,
+            position1X, position1Y, position2X, position2Y,
+            position3X, position3Y, position4X, position4Y
+        ].forEach(el => {
             el.addEventListener('input', updateGradient);
         });
 
-        // Initialize with default settings
+        // Inicjalizacja z domyślnymi ustawieniami
         updateGradient();
+
+        // Funkcjonalność importowania gradientu
+        importButton.addEventListener('click', () => {
+            const importedCss = importTextarea.value.trim();
+            if (!importedCss.startsWith('background:')) {
+                alert('Proszę wprowadzić prawidłowy kod CSS gradientu zaczynający się od "background:"');
+                return;
+            }
+
+            // Regex do wyciągnięcia poszczególnych radial-gradient z RGBA
+            const regexRgba = /radial-gradient\(circle at\s*(\d+)%\s*(\d+)%,\s*rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([0-1]?\.?\d*)\s*\)\s*,\s*transparent\s+(\d+)%\)/gi;
+            // Regex do wyciągnięcia poszczególnych radial-gradient z HEX
+            const regexHex = /radial-gradient\(circle at\s*(\d+)%\s*(\d+)%,\s*(#[0-9a-fA-F]{6})\s*,\s*transparent\s+(\d+)%\)/gi;
+
+            let match;
+            const gradients = [];
+
+            // Najpierw próbujemy dopasować RGBA
+            while ((match = regexRgba.exec(importedCss)) !== null) {
+                gradients.push({ type: 'rgba', match });
+            }
+
+            // Jeśli nie znalazło, próbujemy HEX
+            if (gradients.length === 0) {
+                regexHex.lastIndex = 0; // Reset regex
+                while ((match = regexHex.exec(importedCss)) !== null) {
+                    gradients.push({ type: 'hex', match });
+                }
+            }
+
+            if (gradients.length !== 4) {
+                alert('Proszę upewnić się, że kod CSS zawiera dokładnie cztery radial-gradient w formacie HEX lub RGBA.');
+                return;
+            }
+
+            // Przypisanie wartości do odpowiednich kontrolerów
+            gradients.forEach((g, index) => {
+                if (g.type === 'rgba') {
+                    const [ , posX, posY, r, gColor, b, opacity, size ] = g.match;
+                    const hexColor = rgbToHex(r, gColor, b);
+                    colorInputs = [color1, color2, color3, color4];
+                    opacityInputs = [opacity1, opacity2, opacity3, opacity4];
+                    sizeInputs = [size1, size2, size3, size4];
+                    positionInputsX = [position1X, position2X, position3X, position4X];
+                    positionInputsY = [position1Y, position2Y, position3Y, position4Y];
+
+                    colorInputs[index].value = hexColor;
+                    opacityInputs[index].value = parseFloat(opacity).toFixed(2);
+                    sizeInputs[index].value = size;
+                    positionInputsX[index].value = posX;
+                    positionInputsY[index].value = posY;
+                } else if (g.type === 'hex') {
+                    const [ , posX, posY, hexColor, size ] = g.match;
+                    colorInputs = [color1, color2, color3, color4];
+                    opacityInputs = [opacity1, opacity2, opacity3, opacity4];
+                    sizeInputs = [size1, size2, size3, size4];
+                    positionInputsX = [position1X, position2X, position3X, position4X];
+                    positionInputsY = [position1Y, position2Y, position3Y, position4Y];
+
+                    colorInputs[index].value = hexColor;
+                    opacityInputs[index].value = 1; // Zakładamy pełną nieprzezroczystość
+                    sizeInputs[index].value = size;
+                    positionInputsX[index].value = posX;
+                    positionInputsY[index].value = posY;
+                }
+            });
+
+            // Aktualizacja gradientu po imporcie
+            updateGradient();
+
+            alert('Gradient został zaimportowany pomyślnie!');
+        });
+
+        // Funkcjonalność przeciągania sekcji kontrolnej
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        controlsHeader.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragOffsetX = e.clientX - controls.offsetLeft;
+            dragOffsetY = e.clientY - controls.offsetTop;
+            controlsHeader.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                let left = e.clientX - dragOffsetX;
+                let top = e.clientY - dragOffsetY;
+
+                // Ograniczenie ruchu do widocznego obszaru
+                const bodyRect = document.body.getBoundingClientRect();
+                const controlsRect = controls.getBoundingClientRect();
+
+                if (left < 0) left = 0;
+                if (top < 0) top = 0;
+                if (left + controlsRect.width > bodyRect.width) {
+                    left = bodyRect.width - controlsRect.width;
+                }
+                if (top + controlsRect.height > bodyRect.height) {
+                    top = bodyRect.height - controlsRect.height;
+                }
+
+                controls.style.left = left + 'px';
+                controls.style.top = top + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                controlsHeader.style.cursor = 'grab';
+            }
+        });
+
+        // Funkcjonalność toggle'owania panelu kontrolnego
+        toggleButton.addEventListener('click', () => {
+            if (controls.classList.contains('hidden')) {
+                controls.classList.remove('hidden');
+                toggleButton.textContent = 'Ukryj Panel';
+            } else {
+                controls.classList.add('hidden');
+                toggleButton.textContent = 'Pokaż Panel';
+            }
+        });
+
+        // Opcjonalnie: Możliwość zamknięcia panelu za pomocą przycisku zamknięcia
+        // Jeśli dodasz przycisk zamknięcia w HTML, możesz odkomentować poniższy kod
+        /*
+        closeControlsButton.addEventListener('click', () => {
+            controls.classList.add('hidden');
+            toggleButton.textContent = 'Pokaż Panel';
+        });
+        */
     </script>
 
 </body>
