@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator gradientu</title>
+    <title>Generator Gradientu</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,7 +33,7 @@
             top: 100px;
             left: 20px;
             width: 300px;
-            max-height: 70vh;
+            max-height: 80vh;
             overflow-y: auto;
             padding: 20px;
             background-color: #fff;
@@ -50,12 +50,18 @@
         }
 
         .controls-header {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 10;
             font-weight: bold;
             margin-bottom: 10px;
             cursor: grab; /* Kursor wskazujący możliwość przeciągania */
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
         }
 
         .controls-header span {
@@ -147,8 +153,9 @@
         #toggle-controls:hover {
             background-color: #007bb5;
         } 
+
         #css-output, #import-gradient {
-        height: 350px; 
+            height: 350px; 
         }
     </style>
 </head>
@@ -164,75 +171,76 @@
     <!-- Controls Container -->
     <div class="controls" id="controls">
         <div class="controls-header" id="controls-header">
-            <span>Gradient Controls</span>
+            <span>Kontrolki Gradientu</span>
+            <button id="close-controls">×</button> <!-- Opcjonalny przycisk zamknięcia -->
         </div>
         <div class="controls-container">
-            <!-- Top Left -->
+            <!-- Górny Lewy -->
             <div class="control-group">
-                <label for="color1">Top Left Color</label>
+                <label for="color1">Kolor Górny Lewy</label>
                 <input type="color" id="color1" value="#fbc2eb">
-                <label for="opacity1">Opacity (0-1)</label>
+                <label for="opacity1">Przezroczystość (0-1)</label>
                 <input type="range" id="opacity1" min="0" max="1" step="0.01" value="1">
-                <label for="size1">Size (%)</label>
+                <label for="size1">Rozmiar (%)</label>
                 <input type="range" id="size1" min="20" max="100" value="60">
-                <label for="position1X">X Position (%)</label>
+                <label for="position1X">Pozycja X (%)</label>
                 <input type="number" id="position1X" min="0" max="100" value="0">
-                <label for="position1Y">Y Position (%)</label>
+                <label for="position1Y">Pozycja Y (%)</label>
                 <input type="number" id="position1Y" min="0" max="100" value="0">
             </div>
 
-            <!-- Top Right -->
+            <!-- Górny Prawy -->
             <div class="control-group">
-                <label for="color2">Top Right Color</label>
+                <label for="color2">Kolor Górny Prawy</label>
                 <input type="color" id="color2" value="#a6c1ee">
-                <label for="opacity2">Opacity (0-1)</label>
+                <label for="opacity2">Przezroczystość (0-1)</label>
                 <input type="range" id="opacity2" min="0" max="1" step="0.01" value="1">
-                <label for="size2">Size (%)</label>
+                <label for="size2">Rozmiar (%)</label>
                 <input type="range" id="size2" min="20" max="100" value="60">
-                <label for="position2X">X Position (%)</label>
+                <label for="position2X">Pozycja X (%)</label>
                 <input type="number" id="position2X" min="0" max="100" value="100">
-                <label for="position2Y">Y Position (%)</label>
+                <label for="position2Y">Pozycja Y (%)</label>
                 <input type="number" id="position2Y" min="0" max="100" value="0">
             </div>
 
-            <!-- Bottom Left -->
+            <!-- Dolny Lewy -->
             <div class="control-group">
-                <label for="color3">Bottom Left Color</label>
+                <label for="color3">Kolor Dolny Lewy</label>
                 <input type="color" id="color3" value="#fad0c4">
-                <label for="opacity3">Opacity (0-1)</label>
+                <label for="opacity3">Przezroczystość (0-1)</label>
                 <input type="range" id="opacity3" min="0" max="1" step="0.01" value="1">
-                <label for="size3">Size (%)</label>
+                <label for="size3">Rozmiar (%)</label>
                 <input type="range" id="size3" min="20" max="100" value="60">
-                <label for="position3X">X Position (%)</label>
+                <label for="position3X">Pozycja X (%)</label>
                 <input type="number" id="position3X" min="0" max="100" value="0">
-                <label for="position3Y">Y Position (%)</label>
+                <label for="position3Y">Pozycja Y (%)</label>
                 <input type="number" id="position3Y" min="0" max="100" value="100">
             </div>
 
-            <!-- Bottom Right -->
+            <!-- Dolny Prawy -->
             <div class="control-group">
-                <label for="color4">Bottom Right Color</label>
+                <label for="color4">Kolor Dolny Prawy</label>
                 <input type="color" id="color4" value="#a1c4fd">
-                <label for="opacity4">Opacity (0-1)</label>
+                <label for="opacity4">Przezroczystość (0-1)</label>
                 <input type="range" id="opacity4" min="0" max="1" step="0.01" value="1">
-                <label for="size4">Size (%)</label>
+                <label for="size4">Rozmiar (%)</label>
                 <input type="range" id="size4" min="20" max="100" value="60">
-                <label for="position4X">X Position (%)</label>
+                <label for="position4X">Pozycja X (%)</label>
                 <input type="number" id="position4X" min="0" max="100" value="100">
-                <label for="position4Y">Y Position (%)</label>
+                <label for="position4Y">Pozycja Y (%)</label>
                 <input type="number" id="position4Y" min="0" max="100" value="100">
             </div>
         </div>
 
         <!-- Output Container -->
         <div class="output-container">
-            <label for="css-output">Generated CSS:</label>
+            <label for="css-output">Wygenerowany CSS:</label>
             <textarea id="css-output" readonly></textarea>
         </div>
 
         <!-- Import Container -->
         <div class="import-container">
-            <label for="import-gradient">Import Gradient CSS:</label>
+            <label for="import-gradient">Importuj CSS Gradientu:</label>
             <textarea id="import-gradient" placeholder="Wklej tutaj kod CSS gradientu"></textarea>
             <button id="import-button">Importuj Gradient</button>
         </div>
@@ -273,7 +281,7 @@
         const toggleButton = document.getElementById('toggle-controls');
         const controls = document.getElementById('controls');
         const controlsHeader = document.getElementById('controls-header');
-        // const closeControlsButton = document.getElementById('close-controls'); // Usunięto, ponieważ nie ma przycisku zamknięcia w HTML
+        const closeControlsButton = document.getElementById('close-controls');
 
         // Funkcja konwertująca kolor HEX na RGB
         function hexToRgb(hex) {
@@ -396,11 +404,11 @@
                 if (g.type === 'rgba') {
                     const [ , posX, posY, r, gColor, b, opacity, size ] = g.match;
                     const hexColor = rgbToHex(r, gColor, b);
-                    colorInputs = [color1, color2, color3, color4];
-                    opacityInputs = [opacity1, opacity2, opacity3, opacity4];
-                    sizeInputs = [size1, size2, size3, size4];
-                    positionInputsX = [position1X, position2X, position3X, position4X];
-                    positionInputsY = [position1Y, position2Y, position3Y, position4Y];
+                    const colorInputs = [color1, color2, color3, color4];
+                    const opacityInputs = [opacity1, opacity2, opacity3, opacity4];
+                    const sizeInputs = [size1, size2, size3, size4];
+                    const positionInputsX = [position1X, position2X, position3X, position4X];
+                    const positionInputsY = [position1Y, position2Y, position3Y, position4Y];
 
                     colorInputs[index].value = hexColor;
                     opacityInputs[index].value = parseFloat(opacity).toFixed(2);
@@ -409,11 +417,11 @@
                     positionInputsY[index].value = posY;
                 } else if (g.type === 'hex') {
                     const [ , posX, posY, hexColor, size ] = g.match;
-                    colorInputs = [color1, color2, color3, color4];
-                    opacityInputs = [opacity1, opacity2, opacity3, opacity4];
-                    sizeInputs = [size1, size2, size3, size4];
-                    positionInputsX = [position1X, position2X, position3X, position4X];
-                    positionInputsY = [position1Y, position2Y, position3Y, position4Y];
+                    const colorInputs = [color1, color2, color3, color4];
+                    const opacityInputs = [opacity1, opacity2, opacity3, opacity4];
+                    const sizeInputs = [size1, size2, size3, size4];
+                    const positionInputsX = [position1X, position2X, position3X, position4X];
+                    const positionInputsY = [position1Y, position2Y, position3Y, position4Y];
 
                     colorInputs[index].value = hexColor;
                     opacityInputs[index].value = 1; // Zakładamy pełną nieprzezroczystość
@@ -484,12 +492,10 @@
 
         // Opcjonalnie: Możliwość zamknięcia panelu za pomocą przycisku zamknięcia
         // Jeśli dodasz przycisk zamknięcia w HTML, możesz odkomentować poniższy kod
-        /*
         closeControlsButton.addEventListener('click', () => {
             controls.classList.add('hidden');
             toggleButton.textContent = 'Pokaż Panel';
         });
-        */
     </script>
 
 </body>
