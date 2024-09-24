@@ -31,16 +31,17 @@
             position: absolute;
             top: 100px;
             left: 20px;
-            width: 200px;
+            width: 250px;
             max-height: 80vh;
             overflow-y: auto;
             padding: 0 20px 20px;
-            background-color: #fff;
+            background-color: transparent;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             cursor: default;
             z-index: 1000;
             transition: transform 0.3s ease, opacity 0.3s ease;
+            user-select: none; /* Zapobiega zaznaczaniu tekstu podczas przeciągania */
         }
 
         .controls.hidden {
@@ -51,16 +52,15 @@
         .controls-header {
             position: sticky;
             top: 0;
-            background-color: #fff;
+            background-color: transparent;
             z-index: 10;
             font-weight: bold;
             margin-bottom: 10px;
-            padding-top: 20px;
+            padding: 20px 10px 10px; /* Dostosowano padding */
             cursor: grab;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 10px;
             border-bottom: 1px solid #ccc;
         }
 
@@ -266,6 +266,11 @@
         const importTextarea = document.getElementById('import-gradient');
         const importButton = document.getElementById('import-button');
 
+        // Elementy do obsługi panelu
+        const toggleButton = document.getElementById('toggle-controls');
+        const controlsPanel = document.getElementById('controls');
+        const controlsHeader = document.getElementById('controls-header');
+
         // Funkcja konwertująca kolor HEX na RGB
         function hexToRgb(hex) {
             let r, g, b;
@@ -288,6 +293,19 @@
                 return hex.length === 1 ? '0' + hex : hex;
             };
             return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        // Funkcja sanitizująca i walidująca kod HEX
+        function sanitizeHex(input) {
+            input = input.trim();
+            if (input.startsWith('#')) {
+                input = input.slice(1);
+            }
+            if (/^[0-9A-Fa-f]{6}$/.test(input)) {
+                return `#${input.toLowerCase()}`;
+            } else {
+                return null;
+            }
         }
 
         // Funkcja aktualizująca gradient na podstawie wartości kontrolnych
@@ -335,20 +353,36 @@
 
         // Nasłuchiwanie zmian w polach tekstowych HEX
         color1Text.addEventListener('input', function() {
-            color1.value = this.value;
-            updateGradient();
+            const sanitized = sanitizeHex(this.value);
+            if (sanitized) {
+                color1.value = sanitized;
+                this.value = sanitized;
+                updateGradient();
+            }
         });
         color2Text.addEventListener('input', function() {
-            color2.value = this.value;
-            updateGradient();
+            const sanitized = sanitizeHex(this.value);
+            if (sanitized) {
+                color2.value = sanitized;
+                this.value = sanitized;
+                updateGradient();
+            }
         });
         color3Text.addEventListener('input', function() {
-            color3.value = this.value;
-            updateGradient();
+            const sanitized = sanitizeHex(this.value);
+            if (sanitized) {
+                color3.value = sanitized;
+                this.value = sanitized;
+                updateGradient();
+            }
         });
         color4Text.addEventListener('input', function() {
-            color4.value = this.value;
-            updateGradient();
+            const sanitized = sanitizeHex(this.value);
+            if (sanitized) {
+                color4.value = sanitized;
+                this.value = sanitized;
+                updateGradient();
+            }
         });
 
         // Nasłuchiwanie zmian w inputach kolorów i suwakach
@@ -372,8 +406,8 @@
 
             // Regex do wyciągnięcia poszczególnych radial-gradient z RGBA
             const regexRgba = /radial-gradient\(circle at\s*(\d+)%\s*(\d+)%,\s*rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([0-1]?\.?\d*)\s*\)\s*,\s*transparent\s+(\d+)%\)/gi;
-            // Regex do wyciągnięcia poszczególnych radial-gradient z HEX
-            const regexHex = /radial-gradient\(circle at\s*(\d+)%\s*(\d+)%,\s*(#[0-9a-fA-F]{6})\s*,\s*transparent\s+(\d+)%\)/gi;
+            // Regex do wyciągnięcia poszczególnych radial-gradient z HEX (z lub bez #)
+            const regexHex = /radial-gradient\(circle at\s*(\d+)%\s*(\d+)%,\s*(?:#?)([0-9a-fA-F]{6})\s*,\s*transparent\s+(\d+)%\)/gi;
 
             let match;
             const gradients = [];
@@ -408,6 +442,7 @@
                     const positionInputsY = [position1Y, position2Y, position3Y, position4Y];
 
                     colorInputs[index].value = hexColor;
+                    colorInputs[index].dispatchEvent(new Event('input')); // Aktualizacja pola tekstowego
                     opacityInputs[index].value = parseFloat(opacity).toFixed(2);
                     sizeInputs[index].value = size;
                     positionInputsX[index].value = posX;
@@ -420,7 +455,8 @@
                     const positionInputsX = [position1X, position2X, position3X, position4X];
                     const positionInputsY = [position1Y, position2Y, position3Y, position4Y];
 
-                    colorInputs[index].value = hexColor;
+                    colorInputs[index].value = `#${hexColor.toLowerCase()}`;
+                    colorInputs[index].dispatchEvent(new Event('input')); // Aktualizacja pola tekstowego
                     opacityInputs[index].value = 1; // Zakładamy pełną nieprzezroczystość
                     sizeInputs[index].value = size;
                     positionInputsX[index].value = posX;
@@ -436,6 +472,78 @@
 
         // Inicjalizacja z domyślnymi ustawieniami
         updateGradient();
+
+        // Funkcjonalność toggle dla panelu kontrolnego
+        toggleButton.addEventListener('click', () => {
+            controlsPanel.classList.toggle('hidden');
+            if (controlsPanel.classList.contains('hidden')) {
+                toggleButton.textContent = 'Pokaż Panel';
+            } else {
+                toggleButton.textContent = 'Ukryj Panel';
+            }
+        });
+
+        // Funkcjonalność przeciągania panelu
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        controlsHeader.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            const rect = controlsPanel.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            controlsHeader.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                let newLeft = e.clientX - offsetX;
+                let newTop = e.clientY - offsetY;
+
+                // Ograniczenie panelu do widocznej części ekranu
+                const panelWidth = controlsPanel.offsetWidth;
+                const panelHeight = controlsPanel.offsetHeight;
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+
+                if (newLeft < 0) newLeft = 0;
+                if (newTop < 0) newTop = 0;
+                if (newLeft + panelWidth > windowWidth) newLeft = windowWidth - panelWidth;
+                if (newTop + panelHeight > windowHeight) newTop = windowHeight - panelHeight;
+
+                controlsPanel.style.left = `${newLeft}px`;
+                controlsPanel.style.top = `${newTop}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                controlsHeader.style.cursor = 'grab';
+            }
+        });
+
+        // Aktualizacja pozycji panelu przy zmianie rozmiaru okna
+        window.addEventListener('resize', () => {
+            const rect = controlsPanel.getBoundingClientRect();
+            const panelWidth = controlsPanel.offsetWidth;
+            const panelHeight = controlsPanel.offsetHeight;
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            let newLeft = rect.left;
+            let newTop = rect.top;
+
+            if (newLeft + panelWidth > windowWidth) {
+                newLeft = windowWidth - panelWidth;
+                controlsPanel.style.left = `${newLeft}px`;
+            }
+
+            if (newTop + panelHeight > windowHeight) {
+                newTop = windowHeight - panelHeight;
+                controlsPanel.style.top = `${newTop}px`;
+            }
+        });
     </script>
 
 </body>
